@@ -26,15 +26,10 @@ Naseej lets neighborhood residents request the shops and services they're missin
 ## 📑 Table of Contents
 
 - [Features](#-features)
-- [Tech Stack](#️-tech-stack)
-- [Integrations](#-integrations)
-- [n8n Workflows](#️-n8n-workflows)
 - [Architecture](#️-architecture)
-- [How Idea Screening Works](#-how-idea-screening-works)
 - [Use Case Diagram](#use-case-diagram)
 - [Class Diagram](#class-diagram)
 - [Authentication & Roles](#-authentication--roles)
-- [Revenue Model](#-revenue-model)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [Team](#-team)
@@ -48,43 +43,6 @@ Naseej lets neighborhood residents request the shops and services they're missin
 - **Investors** search by neighborhood, capital or project name, read a short AI feasibility study, unlock opportunities through Moyasar or a success partnership, and sign contracts inside the platform.
 - **Everyone** gets WhatsApp and email alerts when a request completes, an idea is adopted or a business opens.
 
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Backend | Java 17+, Spring Boot 3, Spring Data JPA, Jakarta Validation, Lombok |
-| Security | Spring Security, JWT (access + refresh), Google OAuth2, BCrypt |
-| Database | MySQL |
-| Tools | n8n, Postman, Git & GitHub |
-
-## 🔌 Integrations
-
-| Service | Used for | How we integrated it |
-|---|---|---|
-| <img src="https://cdn.simpleicons.org/anthropic" width="18"> **Claude AI** | Request understanding, Idea Screening, Business Model, Feasibility Study | The server sends the idea, Google Places results and nearby published ideas to Claude. Every response comes back as JSON and is validated by the server before it is saved. |
-| <img src="https://cdn.simpleicons.org/googlemaps" width="18"> **Google Places API** | Scarcity check, competitors | Finds businesses of the same type within a radius that fits the activity, then calculates the count and nearest competitor and compares them with the city average. |
-| <img src="https://cdn.simpleicons.org/googlemaps" width="18"> **Google Maps** | Demand map | Shows neighborhoods colored by the number of votes for each activity. |
-| <img src="https://cdn.simpleicons.org/google" width="18"> **Google OAuth2** | Sign-in | `oauth2Login()` signs the user in. New users are created with the `PENDING` role, sent to the membership page, then issued a JWT. |
-| 💳 **Moyasar** | Payments and refunds | Moyasar's ready payment form handles Apple Pay, mada and cards, so card data never reaches our server. An opportunity is unlocked only after Moyasar's webhook confirms the payment, and refunds go through the Refund API. |
-| <img src="https://cdn.simpleicons.org/n8n" width="18"> **n8n** | Automation | Spring Boot and Moyasar trigger n8n workflows through webhooks for screening, alerts, contracts, deadlines and digests. |
-| <img src="https://cdn.simpleicons.org/whatsapp" width="18"> **WhatsApp** | Alerts | Sent by n8n: request completed, idea adopted, contract ready to sign, business opened. |
-| <img src="https://cdn.simpleicons.org/gmail" width="18"> **Gmail** | OTP codes and contracts | Connected in n8n through an OAuth2 credential from the platform's official account, so emails arrive from "Naseej" and not from a person. |
-| 🪪 **Nafath** | Investor verification | Investors must verify their identity through Nafath before they can access opportunities. |
-
-Every AI result is validated by the server before it is stored or used in any payment step, and nothing is unlocked for an investor before Moyasar's webhook arrives. Moyasar keys are kept in environment variables.
-
-## ⚙️ n8n Workflows
-
-| Workflow | Trigger | Action |
-|---|---|---|
-| New idea | App webhook | Screen the idea and notify interested neighbors |
-| Request completed | Vote threshold reached | Generate the feasibility study and alert investors |
-| Payment confirmed | Moyasar webhook | Unlock the opportunity and issue the VAT invoice |
-| Adoption follow-up | Investor adopts | Collect signatures, email the contract PDF, follow up every 2 weeks |
-| Adoption expired | Not signed within 14 days, or not opened within 180 days (240 with the extension) | Reopen the opportunity and update the voters |
-| Email OTP | Sign-up or login | Send the 6-digit code through Gmail |
-| Weekly digest | Every Sunday | Send investors the top rising requests |
-
 ## 🏗️ Architecture
 
 <p align="center">
@@ -92,18 +50,6 @@ Every AI result is validated by the server before it is stored or used in any pa
     <img src="assets/docs/ArchitectureDiagram.svg" alt="Naseej's Architecture Diagram" width="100%">
   </a>
 </p>
-
-## 🔍 How Idea Screening Works
-
-Before an idea is published, Claude extracts the activity and neighborhood, Google Places counts competitors within a radius that fits the activity (1 km for a supermarket, 3 km for a gym), and a semantic check looks for similar ideas nearby. The result is a score out of 100 and one decision:
-
-| Decision | Meaning | Next step |
-|---|---|---|
-| `SUITABLE` | Clear gap, no matching idea | Build the business model, then publish |
-| `SIMILAR_EXISTS` | A close idea is posted nearby | Join it, or publish and explain the difference |
-| `SATURATED` | Competitors well above the city average | Suggest a scarcer activity in the same neighborhood |
-
-**Vote target.** A bigger project risks more money, so it needs more neighbors behind it. When an idea is published its target is fixed from the business model's estimated capital: **20 votes + 1 vote for every 50,000 SAR** (middle of the range), rounded to the nearest 5, between 20 and 100 (40 when there's no estimate). A barber (120k–220k) needs 25, a café (380k–620k) 30, a supermarket (1M–1.8M) 50, a trampoline park (1.8M–3M) 70. Investors can buy before the target at a lower price; the success partnership opens at 100%.
 
 ## Use Case Diagram
 
@@ -132,15 +78,6 @@ Login is stateless with JWT access and refresh tokens. Users sign up with Google
 | `INVESTOR` | Search, unlock and adopt opportunities, sign contracts |
 | `ADMIN` | Manage users and opportunities, receive a copy of every contract |
 
-## 💰 Revenue Model
-
-Residents and idea owners use Naseej for free. Prices below are proposals for testing with the first investors.
-
-| Source | Who pays | Proposed price |
-|---|---|---|
-| Opportunity access fee | Investor | 1,500 SAR + VAT per opportunity |
-| Success partnership | Investor who doesn't pay upfront | 5% of net profit for 3 years after opening |
-| Investor subscription | Active investors | 299 or 999 SAR per month |
 
 ## 📁 Project Structure
 
@@ -295,19 +232,19 @@ The raw CRUD and AI endpoints (`/ideas/**`, `/payments/**`, `/contracts/**`, …
       <a href="https://github.com/AHMEDALHAMAMI"><img src="https://github.com/AHMEDALHAMAMI.png" width="100" alt="Member"><br><b>Ahmad Alhamami</b></a><br>
       <sub><img src="https://cdn.simpleicons.org/anthropic" width="16"> AI feature</sub><br><br>
       User, Idea, FoundingMember, Subscription, Neighborhood<br><br>
-      <b>0</b> extra endpoints
+      <b>66</b> extra endpoints
     </td>
     <td align="center" width="33%">
       <a href="https://github.com/WaleedAlaql"><img src="https://github.com/WaleedAlaql.png" width="100" alt="Member"><br><b>Waleed Alaql</b></a><br>
       <sub><img src="https://cdn.simpleicons.org/anthropic" width="16"> AI feature</sub><br><br>
       Contract, Payment, PartnershipAgreement, ContractSignature, ProjectUpdate<br><br>
-      <b>0</b> extra endpoints
+      <b>65</b> extra endpoints
     </td>
     <td align="center" width="33%">
       <a href="https://github.com/AmiraAldajani"><img src="https://github.com/AmiraAldajani.png" width="100" alt="Member"><br><b>Amira Aldajani</b></a><br>
       <sub><img src="https://cdn.simpleicons.org/anthropic" width="16"> AI feature</sub><br><br>
       IdeaCheck, BusinessModel, OpportunityAccess, FeasibilityReport, NearbyPlace<br><br>
-      <b>41</b> extra endpoints
+      <b>66</b> extra endpoints
     </td>
   </tr>
 </table>
